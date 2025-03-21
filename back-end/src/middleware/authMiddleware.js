@@ -15,5 +15,20 @@ const authMiddleware = (req, res, next) => {
         next();
     });
 };
+const protect = async (req, res, next) => {
+    let token;
 
-module.exports = authMiddleware;
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+        try {
+            token = req.headers.authorization.split(" ")[1];
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = await User.findById(decoded.id).select("-password"); // Gán user vào req
+            next();
+        } catch (error) {
+            res.status(401).json({ message: "Not authorized, invalid token" });
+        }
+    } else {
+        res.status(401).json({ message: "Not authorized, no token" });
+    }
+};
+module.exports = {authMiddleware, protect};
