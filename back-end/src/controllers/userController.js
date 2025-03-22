@@ -41,7 +41,7 @@ const login = async (req, res) => {
             coin: user.coin,
         }
         res.status(200).json({
-            userInfo,
+            ...userInfo,
             accessToken,
             refreshToken
         });
