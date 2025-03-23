@@ -1,167 +1,327 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet } from "react-native";
-import { useSelector } from "react-redux";
-import { getCartAPI, removeFromCartAPI, updateCartAPI } from "@/src/apis/axios";
+import {
+  Button,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCart, removeCart, setCart, updateQuanityCart } from "@/src/redux/cartSlice";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
+import { getCartAPI, getProductsAPIs } from "@/src/apis/axios";
 
-export default function CartScreen() {
-  const user = useSelector((state: any) => state.user);
-  const [cart, setCart] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function ShoppingCart() {
+  const currentCart = useSelector((state: any) => state.cart.cart);
+  const actionSheetRef = useRef<ActionSheetRef>(null);
+  const dispatch = useDispatch();
+  const currentUser = useSelector((state: any) => state.auth.user);
 
   useEffect(() => {
-    if (!user?.id) return;
+    getCartAPI().then((res) => {
+      dispatch(setCart(res));
+    });
+  }, []);
 
-    const fetchCart = async () => {
-      try {
-        const response = await getCartAPI(user.id);
-        setCart(response.items || []);
-      } catch (error) {
-        console.error("Lỗi khi lấy giỏ hàng:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCart();
-  }, [user]);
-
-  const handleUpdateQuantity = async (productId: string, newQuantity: number) => {
-    if (!user?.id) {
-      alert("Vui lòng đăng nhập");
-      return;
-    }
-
-    if (newQuantity < 1) {
-      handleRemoveFromCart(productId);
-      return;
-    }
-
-    try {
-      await updateCartAPI(user.id, productId, newQuantity);
-      setCart((prevCart) =>
-        prevCart.map((item) =>
-          item.productId._id === productId ? { ...item, quantity: newQuantity } : item
-        )
-      );
-    } catch (error) {
-      console.error("Lỗi khi cập nhật số lượng:", error);
-    }
+  const handleUpdateQuantity = (item: any, quantity: any) => {
+    dispatch(
+      updateQuanityCart({
+        userId: currentUser.id,
+        productId: item.productId._id,
+        quantity: quantity
+      })
+    );
   };
 
-  const handleRemoveFromCart = async (productId: string) => {
-    if (!user?.id) {
-      alert("Vui lòng đăng nhập");
-      return;
-    }
-
-    try {
-      await removeFromCartAPI(user.id, productId);
-      setCart(cart.filter((item) => item.productId._id !== productId));
-    } catch (error) {
-      console.error("Lỗi khi xóa sản phẩm:", error);
-    }
-  };
-
-  // ✅ Hàm tính tổng tiền hàng trong giỏ hàng
-  const calculateTotal = () => {
-    return cart.reduce((total, item) => total + item.productId.price * item.quantity, 0);
-  };
-
-  
+  const handleDeleteItem = (item: any) => {
+    dispatch(removeCart({ userId: currentUser.id, productId: item.productId._id }));
+  }
+  // console.log(currentCart);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>🛒 Giỏ Hàng</Text>
-
-      {cart.length === 0 ? (
-        <Text style={styles.emptyCart}>Giỏ hàng trống!</Text>
-      ) : (
-        <>
-          <FlatList
-            data={cart}
-            keyExtractor={(item) => item.productId._id}
-            renderItem={({ item }) => (
-              <View style={styles.cartItem}>
-                <Image source={{ uri: item.productId.image }} style={styles.image} />
-                <View style={styles.details}>
-                  <Text style={styles.name}>{item.productId.name}</Text>
-                  <Text style={styles.price}>{item.productId.price.toLocaleString()} VND</Text>
-
-                  <View style={styles.quantityContainer}>
-                    <TouchableOpacity onPress={() => handleUpdateQuantity(item.productId._id, item.quantity - 1)}>
-                      <Text style={styles.quantityButton}>-</Text>
-                    </TouchableOpacity>
-
-                    <Text style={styles.quantityText}>{item.quantity}</Text>
-
-                    <TouchableOpacity onPress={() => handleUpdateQuantity(item.productId._id, item.quantity + 1)}>
-                      <Text style={styles.quantityButton}>+</Text>
-                    </TouchableOpacity>
-                  </View>
+    currentCart && (
+      <View style={{ flex: 1, backgroundColor: "white", position: "relative" }}>
+        <FlatList
+          data={currentCart?.items}
+          renderItem={({ item, index }) => (
+            <View
+              key={index}
+              style={{
+                padding: 20,
+                borderBottomWidth: 0.2,
+                borderColor: "#E2E2E2",
+                display: "flex",
+                flexDirection: "row",
+              }}
+            >
+              <View style={{ marginRight: 10 }}>
+                <Image
+                  source={{ uri: item?.productId?.image }}
+                  style={{ width: 120, height: 80 }}
+                />
+              </View>
+              <View style={{ width: "70%" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 20,
+                      fontFamily: "semibold",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {item?.productId?.name}
+                  </Text>
+                  <TouchableOpacity onPress={() => handleDeleteItem(item)}>
+                    <Ionicons name="close" size={20} color={"gray"} />
+                  </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity onPress={() => handleRemoveFromCart(item.productId._id)} style={styles.removeButton}>
-                  <Text style={styles.removeButtonText}>Xóa</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginTop: 10,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 20,
+                    }}
+                  >
+                    <TouchableOpacity
+                      onPress={() =>
+                        handleUpdateQuantity(item, item.quantity - 1)
+                      }
+                    >
+                      <Text
+                        style={{
+                          fontSize: 24,
+                          borderWidth: 0.2,
+                          borderColor: "gray",
+                          padding: 5,
+                          paddingHorizontal: 15,
+                          borderRadius: 7,
+                        }}
+                      >
+                        -
+                      </Text>
+                    </TouchableOpacity>
 
-          {/* ✅ Hiển thị tổng tiền */}
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalText}>Tổng tiền: {calculateTotal().toLocaleString()} VND</Text>
+                    <Text style={{ fontSize: 24, borderColor: "gray" }}>
+                      {item.quantity}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() =>
+                        handleUpdateQuantity(item, item.quantity + 1)
+                      }
+                    >
+                      <Text
+                        style={{
+                          fontSize: 24,
+                          borderWidth: 0.2,
+                          borderColor: "gray",
+                          padding: 5,
+                          paddingHorizontal: 15,
+                          borderRadius: 7,
+                          color: "green",
+                        }}
+                      >
+                        +
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View>
+                    <Text
+                      style={{
+                        fontSize: 24,
+                        fontFamily: "semibold",
+                        fontWeight: "bold",
+                        marginRight: 10,
+                      }}
+                    >
+                      ${item?.productId?.price * item.quantity}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+        />
+
+        <View
+          style={{
+            padding: 20,
+            width: "100%",
+          }}
+        >
+          <Button
+            title={`checkout( ${currentCart.items.reduce(
+              (total, item) => total + item.quantity * item?.productId?.price,
+              0
+            )} $)`}
+            onPress={() => actionSheetRef.current?.show()}
+          />
+        </View>
+        <ActionSheet ref={actionSheetRef}>
+          <View>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: 20,
+              }}
+            >
+              <Text style={{ fontSize: 20, fontFamily: "outfit-bold" }}>
+                Checkout
+              </Text>
+              <Ionicons name="close" size={20} />
+            </View>
+
+            <View
+              style={{
+                borderBottomWidth: 0.2,
+                borderColor: "gray",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: 20,
+              }}
+            >
+              <Text
+                style={{ fontSize: 16, fontFamily: "outfit", color: "gray" }}
+              >
+                Delivery
+              </Text>
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 16, fontFamily: "outfit" }}>
+                  Select Method
+                </Text>
+                <Ionicons name="chevron-forward" size={20} />
+              </View>
+            </View>
+
+            <View
+              style={{
+                borderBottomWidth: 0.2,
+                borderColor: "gray",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: 20,
+              }}
+            >
+              <Text
+                style={{ fontSize: 16, fontFamily: "outfit", color: "gray" }}
+              >
+                Pament
+              </Text>
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <FontAwesome name="cc-mastercard" size={20} />
+                <Ionicons name="chevron-forward" size={20} />
+              </View>
+            </View>
+            <View
+              style={{
+                borderBottomWidth: 0.2,
+                borderColor: "gray",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: 20,
+              }}
+            >
+              <Text
+                style={{ fontSize: 16, fontFamily: "outfit", color: "gray" }}
+              >
+                Promo Code{" "}
+              </Text>
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 16, fontFamily: "outfit" }}>
+                  Pick discount
+                </Text>
+                <Ionicons name="chevron-forward" size={20} />
+              </View>
+            </View>
+            <View
+              style={{
+                borderBottomWidth: 0.2,
+                borderColor: "gray",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: 20,
+              }}
+            >
+              <Text
+                style={{ fontSize: 16, fontFamily: "outfit", color: "gray" }}
+              >
+                Total Cost{" "}
+              </Text>
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 16, fontFamily: "outfit" }}>
+                  $
+                  {currentCart.items.reduce(
+                    (total, item) =>
+                      total + item.quantity * item?.productId?.price,
+                    0
+                  )}{" "}
+                </Text>
+                <Ionicons name="chevron-forward" size={20} />
+              </View>
+            </View>
+
+            <View
+              style={{
+                padding: 20,
+                width: "100%",
+              }}
+            >
+              <Button
+                title={`Place Order`}
+                onPress={() => actionSheetRef.current?.show()}
+              />
+            </View>
           </View>
-        </>
-      )}
-    </View>
+        </ActionSheet>
+      </View>
+    )
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "white" },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
-  emptyCart: { textAlign: "center", fontSize: 16, color: "gray", marginTop: 20 },
-  cartItem: { flexDirection: "row", alignItems: "center", backgroundColor: "#f9f9f9", padding: 10, borderRadius: 8, marginBottom: 10 },
-  image: { width: 60, height: 60, borderRadius: 8 },
-  details: { flex: 1, marginLeft: 10 },
-  name: { fontSize: 16, fontWeight: "bold" },
-  price: { fontSize: 14, color: "#555" },
-  removeButton: {
-    backgroundColor: "red",
-    padding: 8,
-    borderRadius: 5,
-  },
-  removeButtonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  quantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 5,
-  },
-  quantityButton: {
-    fontSize: 18,
-    paddingHorizontal: 10,
-    backgroundColor: "#ddd",
-    borderRadius: 5,
-    marginHorizontal: 5,
-  },
-  quantityText: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  // ✅ Style phần tổng tiền
-  totalContainer: {
-    marginTop: 15,
-    padding: 10,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  totalText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-});
+const styles = StyleSheet.create({});

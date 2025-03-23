@@ -11,6 +11,8 @@ const axiosCustomize = axios.create({
 axiosCustomize.interceptors.request.use(async (config) => {
   const accessToken = await AsyncStorage.getItem('accessToken')
 
+  console.log(accessToken);
+  
   config.headers.Authorization = `Bearer ${accessToken}`
 
   return config;

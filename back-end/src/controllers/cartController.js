@@ -37,6 +37,7 @@ const addToCart = async (req, res) => {
 
     if (!cart) {
       cart = new Cart({ userId, items });
+
     } else {
       items.forEach((newItem) => {
         const existingItem = cart.items.find((item) => item.productId.equals(newItem.productId));
@@ -49,7 +50,9 @@ const addToCart = async (req, res) => {
     }
 
     await cart.save();
-    res.status(200).json({ message: "Added to cart", cart });
+    const cartrs = await Cart.findOne({ userId }).populate("items.productId");
+
+    res.status(200).json( cartrs);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
@@ -60,7 +63,9 @@ const addToCart = async (req, res) => {
 // Lấy giỏ hàng của người dùng
  const getCart = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const  userId  = req.user.userId;
+    console.log(req.user);
+    
     const cart = await Cart.findOne({ userId }).populate("items.productId");
     if (!cart) return res.status(404).json({ message: "Giỏ hàng trống" });
     res.status(200).json(cart);
@@ -80,7 +85,9 @@ const addToCart = async (req, res) => {
     cart.items = cart.items.filter((item) => item.productId.toString() !== productId);
     await cart.save();
 
-    res.status(200).json({ message: "Xóa sản phẩm khỏi giỏ hàng thành công", cart });
+    const cartrs = await Cart.findOne({ userId }).populate("items.productId");
+
+    res.status(200).json( cartrs );
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -104,9 +111,10 @@ const updateCartItemQuantity = async (req, res) => {
     if (!item) return res.status(404).json({ message: "Sản phẩm không có trong giỏ hàng" });
 
     item.quantity = quantity;
-    await cart.save();
-
-    res.status(200).json({ message: "Cập nhật số lượng thành công", cart });
+    await cart.save()
+    
+    const cartrs = await Cart.findOne({ userId }).populate("items.productId");
+    res.status(200).json(cartrs);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

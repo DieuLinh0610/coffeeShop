@@ -28,6 +28,7 @@ import {
   getFavorites,
   removeFromFavorites,
 } from "../Product/favoriteStorage";
+import { addCart } from "@/src/redux/cartSlice";
 
 export default function HomePage() {
   const router = useRouter();
@@ -112,6 +113,7 @@ export default function HomePage() {
     fetchFavorites(); // Cập nhật lại danh sách yêu thích
   };
 
+
   const handleAddToCart = async (productId) => {
     try {
       if (!user || !user.id) {
@@ -119,7 +121,8 @@ export default function HomePage() {
         return;
       }
 
-      await addToCartAPI(user.id, productId, 1);
+
+      dispatch(addCart({ userId: user.id, productId: productId, quantity: 1 }));
       alert("Đã thêm vào giỏ hàng! 🎉");
     } catch (error) {
       alert("Thêm vào giỏ hàng thất bại! ❌");

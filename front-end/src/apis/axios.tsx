@@ -21,8 +21,8 @@ export const addToCartAPI = async (userId, productId, quantity) => {
      
 };
 
-export const getCartAPI = async (userId: string) => {
-  return await axiosCustomize.get(`/cart/${userId}`);
+export const getCartAPI = async () => {
+  return await axiosCustomize.get(`/cart`);
 };
 
 export const removeFromCartAPI = async (userId: string, productId: string) => {
