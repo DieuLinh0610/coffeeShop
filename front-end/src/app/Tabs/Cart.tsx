@@ -9,10 +9,17 @@ import {
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchCart, removeCart, setCart, updateQuanityCart } from "@/src/redux/cartSlice";
+import {
+  clearCartItems,
+  fetchCart,
+  removeCart,
+  setCart,
+  updateQuanityCart,
+} from "@/src/redux/cartSlice";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
 import { getCartAPI, getProductsAPIs } from "@/src/apis/axios";
+import axiosCustomize from "@/src/utils/axiosCustomize";
 
 export default function ShoppingCart() {
   const currentCart = useSelector((state: any) => state.cart.cart);
@@ -31,16 +38,35 @@ export default function ShoppingCart() {
       updateQuanityCart({
         userId: currentUser.id,
         productId: item.productId._id,
-        quantity: quantity
+        quantity: quantity,
       })
     );
   };
 
   const handleDeleteItem = (item: any) => {
-    dispatch(removeCart({ userId: currentUser.id, productId: item.productId._id }));
-  }
+    dispatch(
+      removeCart({ userId: currentUser.id, productId: item.productId._id })
+    );
+  };
   // console.log(currentCart);
 
+  const handlePlaceOrder = async () => {
+    try {
+      // Gọi API đặt hàng (giả sử có API này)
+      const response = await axiosCustomize.post("/orders/place", {
+        userId: currentUser.id,
+        cartItems: currentCart.items,
+      });
+  
+      if (response) {
+        dispatch(clearCartItems()); // Xóa items trong giỏ hàng sau khi đặt hàng thành công
+        actionSheetRef.current?.hide();
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+    }
+  };
+  
   return (
     currentCart && (
       <View style={{ flex: 1, backgroundColor: "white", position: "relative" }}>
@@ -149,7 +175,7 @@ export default function ShoppingCart() {
                         marginRight: 10,
                       }}
                     >
-                      ${item?.productId?.price * item.quantity}
+                      {item?.productId?.price * item.quantity}
                     </Text>
                   </View>
                 </View>
@@ -165,10 +191,10 @@ export default function ShoppingCart() {
           }}
         >
           <Button
-            title={`checkout( ${currentCart.items.reduce(
+            title={`Đặt hàng( ${currentCart.items.reduce(
               (total, item) => total + item.quantity * item?.productId?.price,
               0
-            )} $)`}
+            )} VNĐ)`}
             onPress={() => actionSheetRef.current?.show()}
           />
         </View>
@@ -295,7 +321,6 @@ export default function ShoppingCart() {
                 }}
               >
                 <Text style={{ fontSize: 16, fontFamily: "outfit" }}>
-                  $
                   {currentCart.items.reduce(
                     (total, item) =>
                       total + item.quantity * item?.productId?.price,
@@ -312,10 +337,8 @@ export default function ShoppingCart() {
                 width: "100%",
               }}
             >
-              <Button
-                title={`Place Order`}
-                onPress={() => actionSheetRef.current?.show()}
-              />
+              <Button title={`Place Order`} onPress={handlePlaceOrder} />
+
             </View>
           </View>
         </ActionSheet>

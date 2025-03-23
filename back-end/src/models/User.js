@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const bcryptjs = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
-    username: { type: String },
+    userName: { type: String },
     email: { type: String, unique: true },
     password: { type: String }, // Lưu mật khẩu đã mã hóa
     createdAt: { type: Date, default: Date.now },
@@ -11,7 +11,7 @@ const UserSchema = new mongoose.Schema({
     image: { type: String },
     gender: { type: Boolean },
     dateOfBirth: { type: Date },
-    role: { type: String }
+    role: { type: String ,enum: ["admin", "user"], default: "user"}
 });
 
 // Mã hóa mật khẩu trước khi lưu vào database

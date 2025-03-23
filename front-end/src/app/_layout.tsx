@@ -12,7 +12,13 @@ export default function RootLayout() {
       <PersistGate loading={null} persistor={persistor}>
       <Stack >
     <Stack.Screen name="Auth/Login" options={{ headerShown: false }}/>
-    
+    <Stack.Screen name = "Tabs" 
+    options={{
+      headerShown: false,
+    }}/>
+        <Stack.Screen name="Product/ProductDetail" options={{ headerTransparent: true, headerTitle:" Chi tiết sản phẩm" }}/>
+        <Stack.Screen name="Product/OrderHistory" options={{ headerTransparent: true, headerTitle:"Lịch sử mua hàng " }}/>
+
   </Stack>
   </PersistGate>
     </Provider>

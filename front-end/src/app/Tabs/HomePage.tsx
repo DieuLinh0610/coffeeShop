@@ -113,14 +113,12 @@ export default function HomePage() {
     fetchFavorites(); // Cập nhật lại danh sách yêu thích
   };
 
-
   const handleAddToCart = async (productId) => {
     try {
       if (!user || !user.id) {
         alert("Vui lòng đăng nhập!");
         return;
       }
-
 
       dispatch(addCart({ userId: user.id, productId: productId, quantity: 1 }));
       alert("Đã thêm vào giỏ hàng! 🎉");
@@ -146,117 +144,129 @@ export default function HomePage() {
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar />
+    <FlatList
+      data={[]}
+      renderItem={null}
+      ListHeaderComponent={
+        <View style={styles.container}>
+          <StatusBar />
 
-      {/* Header Section */}
-      <SafeAreaView style={styles.headerContainer}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.push("/Tabs/Profile")}>
-            <Image
-              source={require("../../../assets/images/avatar-profile.png")}
-              style={styles.avatar}
-            />
-          </TouchableOpacity>
-          <View style={styles.locationTextContainer}>
-            <MapPinIcon color="black" opacity={0.6} size={20} />
-            <Text>Hà Nội, Việt Nam</Text>
-          </View>
-          <TouchableOpacity>
-            <BellIcon size={27} color="black" opacity={0.6} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.searchContainer}>
-          <MagnifyingGlassIcon size={20} color="#FFA500" />
-          <TextInput
-            placeholder="Tìm kiếm sản phẩm..."
-            placeholderTextColor="gray"
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-      </SafeAreaView>
-
-      {/* Categories Section */}
-      <FlatList
-        data={categories}
-        horizontal
-        keyExtractor={(item: any) => item._id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.categoryButton,
-              selectedCategory === item._id && styles.selectedButton,
-            ]}
-            onPress={() =>
-              setSelectedCategory(
-                selectedCategory === item._id ? null : item._id
-              )
-            }
-          >
-            <Text
-              style={[
-                styles.categoryText,
-                selectedCategory === item._id && styles.selectedText,
-              ]}
-            >
-              {item.name}
-            </Text>
-          </TouchableOpacity>
-        )}
-        contentContainerStyle={styles.categoriesContainer}
-      />
-
-      {/* Products Section */}
-      <FlatList
-        data={filteredProducts}
-        numColumns={2} // 2 items per row
-        keyExtractor={(item: any) => item._id} // Ensure a unique key for each product
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.productCard}
-            onPress={() =>
-              router.push({
-                pathname: "/Product/ProductDetail",
-                params: { id: item._id },
-              })
-            } // Điều hướng tới trang chi tiết sản phẩm
-          >
-            <View style={styles.imageContainer}>
-              <Image
-                source={{ uri: item.image }}
-                style={styles.productImage}
-                resizeMode="cover"
-              />
-              <TouchableOpacity
-                style={styles.favoriteButton}
-                onPress={() => toggleFavorite(item)}
-              >
-                <Text style={styles.favoriteIcon}>
-                  {favorites.some((fav: any) => fav._id === item._id)
-                    ? "❤️"
-                    : "🤍"}
-                </Text>
+          {/* Header Section */}
+          <SafeAreaView style={styles.headerContainer}>
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => router.push("/Tabs/Profile")}>
+                <Image
+                  source={require("../../../assets/images/avatar-profile.png")}
+                  style={styles.avatar}
+                />
+              </TouchableOpacity>
+              <View style={styles.locationTextContainer}>
+                <MapPinIcon color="black" opacity={0.6} size={20} />
+                <Text>Hà Nội, Việt Nam</Text>
+              </View>
+              <TouchableOpacity>
+                <BellIcon size={27} color="black" opacity={0.6} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.productTitle}>{item.name}</Text>
-            <Text style={styles.productDescription}>{item.description}</Text>
-            <Text style={styles.productPrice}>
-              {item.price.toLocaleString()} VND
-            </Text>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => handleAddToCart(item._id)}
-            >
-              <Text style={styles.addButtonText}>Thêm vào giỏ</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        )}
-        columnWrapperStyle={styles.productRow}
-      />
-    </View>
+
+            <View style={styles.searchContainer}>
+              <MagnifyingGlassIcon size={20} color="#FFA500" />
+              <TextInput
+                placeholder="Tìm kiếm sản phẩm..."
+                placeholderTextColor="gray"
+                style={styles.searchInput}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+          </SafeAreaView>
+
+          {/* Categories Section */}
+          <View style= {{padding: 20}}>
+          <FlatList
+            data={categories}
+            numColumns={3} // Chia 3 category mỗi dòng, có thể đổi thành 4 nếu cần
+            keyExtractor={(item: any) => item._id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.categoryButton,
+                  selectedCategory === item._id && styles.selectedButton,
+                ]}
+                onPress={() =>
+                  setSelectedCategory(
+                    selectedCategory === item._id ? null : item._id
+                  )
+                }
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    selectedCategory === item._id && styles.selectedText,
+                  ]}
+                  numberOfLines={1} // Giữ tên category trên 1 dòng
+                  ellipsizeMode="tail" // Cắt bớt nếu quá dài
+                >
+                  {item.name}
+                </Text>
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={styles.categoriesContainer}
+          />
+          </View>
+
+          {/* Products Section */}
+          <FlatList
+            data={filteredProducts}
+            numColumns={2} // 2 items per row
+            keyExtractor={(item: any) => item._id} // Ensure a unique key for each product
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.productCard}
+                onPress={() =>
+                  router.push({
+                    pathname: "/Product/ProductDetail",
+                    params: { id: item._id },
+                  })
+                } // Điều hướng tới trang chi tiết sản phẩm
+              >
+                <View style={styles.imageContainer}>
+                  <Image
+                    source={{ uri: item.image }}
+                    style={styles.productImage}
+                    resizeMode="cover"
+                  />
+                  <TouchableOpacity
+                    style={styles.favoriteButton}
+                    onPress={() => toggleFavorite(item)}
+                  >
+                    <Text style={styles.favoriteIcon}>
+                      {favorites.some((fav: any) => fav._id === item._id)
+                        ? "❤️"
+                        : "🤍"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.productTitle}>{item.name}</Text>
+                <Text style={styles.productDescription}>
+                  {item.description}
+                </Text>
+                <Text style={styles.productPrice}>
+                  {item.price.toLocaleString()} VND
+                </Text>
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={() => handleAddToCart(item._id)}
+                >
+                  <Text style={styles.addButtonText}>Thêm vào giỏ</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            )}
+            columnWrapperStyle={styles.productRow}
+          />
+        </View>
+      }
+    />
   );
 }
 
@@ -328,24 +338,11 @@ const styles = StyleSheet.create({
     width: "50%",
   },
   categoriesContainer: {
-    paddingHorizontal: 20,
-    marginTop: 20,
-    paddingBottom: 0,
-    marginBottom: 20,
+  padding: 20
+
   },
-  categoryButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    backgroundColor: "#ddd",
-    height: 40,
-    width: 80,
-    marginRight: 15,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+ 
   selectedButton: { backgroundColor: "#ff7f50" },
-  categoryText: { fontSize: 16, color: "#333" },
   selectedText: { color: "#fff", fontWeight: "bold" },
   imageContainer: {
     position: "relative", // Để chứa các phần tử con có vị trí tuyệt đối
@@ -366,4 +363,23 @@ const styles = StyleSheet.create({
   favoriteIcon: {
     fontSize: 20,
   },
+
+  categoryButton: {
+    flex: 1, // Chia đều trong cột
+    paddingVertical: 8,
+    margin: 5, // Khoảng cách giữa các category
+    borderRadius: 10,
+    backgroundColor: "#ddd",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 80, // Định kích thước tối thiểu để không quá nhỏ
+    maxWidth: 120, // Định kích thước tối đa để không quá to
+  },
+  
+  categoryText: {
+    fontSize: 14, 
+    fontWeight: "500",
+    textAlign: "center", // Canh giữa chữ
+  },
+  
 });

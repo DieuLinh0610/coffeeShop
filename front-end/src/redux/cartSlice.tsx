@@ -51,7 +51,12 @@ const cartSlice = createSlice({
   reducers: {
     setCart: (state, action) => {
       state.cart = action.payload;
-    }
+    },
+    clearCartItems: (state) => {
+      if (state.cart) {
+        state.cart.items = []; // Xóa tất cả items nhưng giữ nguyên giỏ hàng
+      }
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchCart.fulfilled, (state, action: any) => {
@@ -69,6 +74,6 @@ const cartSlice = createSlice({
   }
 });
 
-export const { setCart } = cartSlice.actions;
+export const { setCart, clearCartItems } = cartSlice.actions;
 
 export default cartSlice.reducer;
